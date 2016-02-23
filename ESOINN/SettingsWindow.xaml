@@ -1,0 +1,19 @@
+﻿<Window x:Class="Main.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:wpg="clr-namespace:WPG;assembly=WPG"
+        Title="SettingsWindow" Width="300" Height="400">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <wpg:PropertyGrid Grid.Row="0" Name="propertyGrid1"/>
+        
+        <GridSplitter Grid.Row="1" Height="2" HorizontalAlignment="Stretch"/>
+
+        <wpg:PropertyGrid Grid.Row="2" Name="propertyGrid2"/>
+    </Grid>
+</Window>
