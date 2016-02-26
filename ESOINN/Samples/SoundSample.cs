@@ -45,7 +45,7 @@ namespace Main.Samples
             Model = new ESOINN(100, age, age + age / 2 );
             ReduceNoise = true;
             Winners = new List<Vertex>();
-            this.Time = 40;
+            this.Time = 10;
         }
 
         public override void Dispose()
@@ -88,79 +88,42 @@ namespace Main.Samples
         }
 
 
-        /*private void recorderOnDataAvailable(object sender, WaveInEventArgs e)
-        {
-            int rate = (this.recorder.WaveFormat.BitsPerSample / 8) * this.recorder.WaveFormat.Channels;
-            for (int j = 0; j < (e.BytesRecorded / Model.Dim) / rate; j++)
-            {
-                double max = double.MinValue;
-                double[] temp = new double[Model.Dim];
-                for (int i = 0; i < Model.Dim; i++)
-                {
-                    if (recorder.WaveFormat.Encoding == WaveFormatEncoding.IeeeFloat)
-                        temp[i] = BitConverter.ToSingle(e.Buffer, (i + j * Model.Dim) * rate);
-                    else
-                        temp[i] = ConvertValue(recorder.WaveFormat.BitsPerSample, e.Buffer, (i + j * Model.Dim) * rate);
-                    max = Math.Max(max, Math.Abs(temp[i]));
-                    //Console.WriteLine(temp[i]);
-                }
-                if (max == 0.0)
-                    return;
-                if (ReduceNoise)
-                {
-                    if (recorder.WaveFormat.Encoding == WaveFormatEncoding.IeeeFloat && max < 0.1)
-                        return;
-                    else if (recorder.WaveFormat.Encoding != WaveFormatEncoding.IeeeFloat)
-                    {
-                        if (recorder.WaveFormat.BitsPerSample == 8 && max < 12.8)
-                            return;
-                        else if (recorder.WaveFormat.BitsPerSample == 16 && max < ushort.MaxValue / 10)
-                            return;
-                        else if (recorder.WaveFormat.BitsPerSample == 32 && max < uint.MaxValue / 10)
-                            return;
-                        else if (recorder.WaveFormat.BitsPerSample == 64 && max < ulong.MaxValue / 10)
-                            return;
-                    }
-                }
-
-                for (int i = 0; i < temp.Length; i++)
-                    temp[i] = (temp[i] / max);
-
-                buffer.Add(temp);
-                samplesCount++;
-            }
-        }*/
-
-        private List<double> temp = new List<double>();
+        private List<double> data = new List<double>();
         private int noiseCounter = 0;
         private void recorderOnDataAvailable(object sender, WaveInEventArgs e)
         {
-            
-            int rate = (this.recorder.WaveFormat.BitsPerSample / 8) * this.recorder.WaveFormat.Channels;
+            var format = recorder.WaveFormat;
+            int rate = (format.BitsPerSample / 8) * format.Channels;
             for (int i = 0; i < e.BytesRecorded / rate; i++)
             {
-                if (recorder.WaveFormat.Encoding == WaveFormatEncoding.IeeeFloat)
-                    temp.Add(BitConverter.ToSingle(e.Buffer, i * rate));
+                if (format.Encoding == WaveFormatEncoding.IeeeFloat)
+                    data.Add(BitConverter.ToSingle(e.Buffer, i * rate));
                 else
-                    temp.Add(ConvertValue(recorder.WaveFormat.BitsPerSample, e.Buffer, i * rate));
-                if (Math.Abs(temp[temp.Count - 1]) < 0.1)
+                    data.Add(ConvertValue(format.BitsPerSample, e.Buffer, i * rate));
+
+                if (ReduceNoise && Math.Abs(data[data.Count - 1]) < 0.01)
                 {
                     noiseCounter++;
-                    if (noiseCounter >= this.recorder.WaveFormat.SampleRate / (1000 / this.Time))
-                        temp.Clear();
+                    if (noiseCounter >= format.SampleRate / (1000 / this.Time))
+                    {
+                        data.Clear();
+
+                        if (Winners.Count > 0 && Winners[Winners.Count - 1] != null && this.buffer.Count == 0)
+                            Winners.Add(null);
+                    }
                 }
                 else
                     noiseCounter = 0;
 
-                if (temp.Count == this.recorder.WaveFormat.SampleRate / (1000 / this.Time)) // samples for 'Time' ms
+                if (data.Count == format.SampleRate / (1000 / this.Time)) // samples for 'Time' ms
                 {
-                    double[] realIn = new double[DSP.FourierTransform.NextPowerOfTwo((uint)temp.Count)];
-                    temp.CopyTo(realIn);
+                    double[] realIn = new double[DSP.FourierTransform.NextPowerOfTwo((uint)data.Count)];
+                    data.CopyTo(realIn);
                     double[] realOut = new double[realIn.Length];
                     if (true) // Fourier or not?
                         DSP.FourierTransform.Compute((uint)realIn.Length, ref realIn, new double[realIn.Length], realOut, new double[realIn.Length], false);
                     else
-                        realOut = temp.ToArray();
+                        realOut = data.ToArray();
 
                     double[] buff = new double[Model.Dim];
                     for (int j = 0; j < realOut.Length; j++)
@@ -170,7 +133,7 @@ namespace Main.Samples
                     }
                     this.buffer.Add(buff);
                     samplesCount++;
-                    temp.Clear();
+                    data.Clear();
                 }
             }
         }

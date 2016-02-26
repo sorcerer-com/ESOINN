@@ -212,14 +212,14 @@ namespace Main.Network
             incrementEdgesAge(winners.Item1);
             if (needAddEdge(winners.Item1, winners.Item2))
             {
-                Edge e = new Edge(winners.Item1, winners.Item2);
-                e.Age = 0;
-                winners.Item1.Edges.Remove(e);
-                winners.Item1.Edges.Add(e);
-                winners.Item2.Edges.Remove(e);
-                winners.Item2.Edges.Add(e);
-                this.Graph.Edges.Remove(e);
-                this.Graph.Edges.Add(e);
+                Edge edge = new Edge(winners.Item1, winners.Item2);
+                edge.Age = 0;
+                winners.Item1.Edges.Remove(edge);
+                winners.Item1.Edges.Add(edge);
+                winners.Item2.Edges.Remove(edge);
+                winners.Item2.Edges.Add(edge);
+                this.Graph.Edges.Remove(edge);
+                this.Graph.Edges.Add(edge);
             }
             else
             {

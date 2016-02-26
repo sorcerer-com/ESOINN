@@ -296,7 +296,9 @@ namespace Main
             int childIndex = 1;
             foreach (var edge in Sample.Model.Graph.Edges)
             {
-                Color c = Color.FromRgb((byte)(((double)(edge.Vertex1.ClassId % 3) / 3) * 100),
+                byte a = (byte)Math.Min(255, 105 + 50 * edge.Vertex1.Edges.Count);
+                Color c = Color.FromArgb(a, 
+                    (byte)(((double)((edge.Vertex1.ClassId + 0) % 3) / 3) * 100),
                     (byte)(((double)((edge.Vertex1.ClassId + 1) % 3) / 3) * 100),
                     (byte)(((double)((edge.Vertex1.ClassId + 2) % 3) / 3) * 100));
 
@@ -321,7 +323,9 @@ namespace Main
 
             foreach (var vertex in Sample.Model.Graph.Vertices)
             {
-                Color c = Color.FromRgb((byte)(((double)(vertex.ClassId % 3) / 3) * 255),
+                byte a = (byte)Math.Min(255, 105 + 50 * vertex.Edges.Count);
+                Color c = Color.FromArgb(a,
+                    (byte)(((double)((vertex.ClassId + 0) % 3) / 3) * 255),
                     (byte)(((double)((vertex.ClassId + 1) % 3) / 3) * 255),
                     (byte)(((double)((vertex.ClassId + 2) % 3) / 3) * 255));
 
