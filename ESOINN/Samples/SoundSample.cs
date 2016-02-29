@@ -20,25 +20,42 @@ namespace Main.Samples
             get { return samplesCount + 1; }
         }
 
-        private IWaveIn recorder;
+        private WaveIn inputRecorder;
+        private WasapiLoopbackCapture outputRecorder;
         private List<double[]> buffer;
 
         public int Time { get; set; }
         public double NoiseThreshold { get; set; }
 
-
-        public SoundSample(bool input)
+        private bool muteInput;
+        public bool MuteInput
         {
-            if (input)
+            get { return this.muteInput; }
+            set
             {
-                this.recorder = new WaveIn();
-                (this.recorder as WaveIn).BufferMilliseconds = 500;
-                this.recorder.WaveFormat = new WaveFormat(8000, 8, 1);
+                if (this.muteInput != value)
+                {
+                    this.muteInput = value;
+                    if (this.muteInput)
+                        this.inputRecorder.StopRecording();
+                    else
+                        this.inputRecorder.StartRecording();
+                }
             }
-            else
-                this.recorder = new WasapiLoopbackCapture();
-            this.recorder.DataAvailable += recorderOnDataAvailable;
-            this.recorder.StartRecording();
+        }
+
+
+        public SoundSample()
+        {
+            this.inputRecorder = new WaveIn();
+            this.inputRecorder.BufferMilliseconds = 500;
+            this.inputRecorder.WaveFormat = new WaveFormat(8000, 8, 1);
+            this.inputRecorder.DataAvailable += recorderOnDataAvailable;
+            this.inputRecorder.StartRecording();
+
+            this.outputRecorder = new WasapiLoopbackCapture();
+            this.outputRecorder.DataAvailable += recorderOnDataAvailable;
+            this.outputRecorder.StartRecording();
 
             buffer = new List<double[]>();
 
@@ -48,12 +65,14 @@ namespace Main.Samples
             Winners = new List<Vertex>();
 
             this.Time = 10;
-            this.NoiseThreshold = 0.01;
+            this.NoiseThreshold = 0.1;
+            this.MuteInput = true;
         }
 
         public override void Dispose()
         {
-            recorder.StopRecording();
+            this.outputRecorder.StopRecording();
+            this.inputRecorder.StopRecording();
         }
 
 
@@ -61,7 +80,7 @@ namespace Main.Samples
         {
             if (buffer.Count == 0 || buffer[0] == null || buffer[0].Length != Model.Dim)
             {
-                if (buffer.Count != 0)
+                if (buffer.Count > 0)
                     buffer.RemoveAt(0);
                 return false;
             }
@@ -91,54 +110,63 @@ namespace Main.Samples
         }
 
 
-        private List<double> data = new List<double>();
-        private int noiseCounter = 0;
         private void recorderOnDataAvailable(object sender, WaveInEventArgs e)
         {
-            var format = recorder.WaveFormat;
-            int rate = (format.BitsPerSample / 8) * format.Channels;
-            for (int i = 0; i < e.BytesRecorded / rate; i++)
+            var recorder = sender as IWaveIn;
+            this.processData(recorder.WaveFormat, e.Buffer, e.BytesRecorded);
+        }
+
+        private int noiseCounter = 0;
+        private List<double> data = new List<double>();
+        private void processData(WaveFormat waveFormat, byte[] buffer, int bytesRecorded)
+        {
+            lock (data)
             {
-                if (format.Encoding == WaveFormatEncoding.IeeeFloat)
-                    data.Add(BitConverter.ToSingle(e.Buffer, i * rate));
-                else
-                    data.Add(ConvertValue(format.BitsPerSample, e.Buffer, i * rate));
-
-                if (ReduceNoise && Math.Abs(data[data.Count - 1]) < this.NoiseThreshold)
+                int rate = (waveFormat.BitsPerSample / 8) * waveFormat.Channels;
+                for (int i = 0; i < bytesRecorded / rate; i++)
                 {
-                    noiseCounter++;
-                    if (noiseCounter >= format.SampleRate / (1000 / this.Time))
-                        data.Clear();
-
-                    if (noiseCounter >= (format.SampleRate / (1000 / this.Time)) * 2)
-                        if (Winners.Count > 0 && Winners[Winners.Count - 1] != null && this.buffer.Count == 0)
-                            Winners.Add(null);
-                }
-                else
-                    noiseCounter = 0;
-
-                if (data.Count == format.SampleRate / (1000 / this.Time)) // samples for 'Time' ms
-                {
-                    double[] realIn = new double[DSP.FourierTransform.NextPowerOfTwo((uint)data.Count)];
-                    data.CopyTo(realIn);
-                    double[] realOut = new double[realIn.Length];
-                    if (true) // Fourier or not?
-                        DSP.FourierTransform.Compute((uint)realIn.Length, ref realIn, new double[realIn.Length], realOut, new double[realIn.Length], false);
+                    if (waveFormat.Encoding == WaveFormatEncoding.IeeeFloat)
+                        data.Add(BitConverter.ToSingle(buffer, i * rate));
                     else
-                        realOut = data.ToArray();
+                        data.Add(ConvertValue(waveFormat.BitsPerSample, buffer, i * rate));
 
-                    double[] buff = new double[Model.Dim];
-                    for (int j = 0; j < realOut.Length; j++)
+                    if (ReduceNoise && data.Count > 0 && Math.Abs(data[data.Count - 1]) < this.NoiseThreshold)
                     {
-                        int idx = (int)(j / ((double)realOut.Length / Model.Dim));
-                        buff[idx] += realOut[j];
+                        noiseCounter++;
+                        if (noiseCounter >= waveFormat.SampleRate / (1000 / this.Time))
+                            data.Clear();
+
+                        if (noiseCounter >= (waveFormat.SampleRate / (1000 / this.Time)) * 2)
+                            if (Winners.Count > 0 && Winners[Winners.Count - 1] != null && this.buffer.Count == 0)
+                                Winners.Add(null);
                     }
-                    this.buffer.Add(buff);
-                    samplesCount++;
-                    data.Clear();
+                    else
+                        noiseCounter = 0;
+
+                    if (data.Count == waveFormat.SampleRate / (1000 / this.Time)) // samples for 'Time' ms
+                    {
+                        double[] realIn = new double[DSP.FourierTransform.NextPowerOfTwo((uint)data.Count)];
+                        data.CopyTo(realIn);
+                        double[] realOut = new double[realIn.Length];
+                        if (true) // Fourier or not?
+                            DSP.FourierTransform.Compute((uint)realIn.Length, ref realIn, new double[realIn.Length], realOut, new double[realIn.Length], false);
+                        else
+                            realOut = data.ToArray();
+
+                        double[] buff = new double[Model.Dim];
+                        for (int j = 0; j < realOut.Length; j++)
+                        {
+                            int idx = (int)(j / ((double)realOut.Length / Model.Dim));
+                            buff[idx] += realOut[j];
+                        }
+                        this.buffer.Add(buff);
+                        samplesCount++;
+                        data.Clear();
+                    }
                 }
             }
         }
+
         
         public static double ConvertValue(int rate, byte[] array, int startIndex)
         {

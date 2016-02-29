@@ -44,6 +44,16 @@ namespace Main
             base.OnClosing(e);
         }
 
+        protected override void OnLocationChanged(EventArgs e)
+        {
+            base.OnLocationChanged(e);
+
+            if (settingsWindows == null || !settingsWindows.IsVisible)
+                return;
+
+            settingsWindows.Top = this.Top;
+            settingsWindows.Left = this.Left + this.ActualWidth;
+        }
         
         private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
@@ -159,10 +169,8 @@ namespace Main
             {
                 if (comboBox.Text == "Image")
                     Sample = new ImageSample("img.png");
-                else if (comboBox.Text == "SoundIn")
-                    Sample = new SoundSample(true);
-                else if (comboBox.Text == "SoundOut")
-                    Sample = new SoundSample(false);
+                else if (comboBox.Text == "Sound")
+                    Sample = new SoundSample();
 
                 this.canvas.Children.Clear();
                 refreshUI(0, new TimeSpan());
@@ -174,11 +182,16 @@ namespace Main
                 thread.Start();
 
                 startButton.Content = "Stop";
+
+                this.settingsButton_Click(sender, e);
             }
             else
             {
                 this.runing = false;
                 startButton.Content = "Start";
+
+                if (settingsWindows != null && settingsWindows.IsVisible)
+                    settingsWindows.Close();
             }
         }
 
@@ -269,7 +282,7 @@ namespace Main
 
             log.Items.Clear();
             int idx = Sample.Winners.Count - 1;
-            while (log.Items.Count < 100)
+            while (log.Items.Count < 10)
             {
                 StringBuilder sbr = new StringBuilder("");
                 while (idx >= 0 && Sample.Winners[idx] != null)

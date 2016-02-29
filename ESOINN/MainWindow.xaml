@@ -31,10 +31,9 @@
         <GridSplitter Grid.Row="2" Height="2" HorizontalAlignment="Stretch"/>
 
         <DockPanel Grid.Row="0">
-            <ComboBox Name="comboBox" Width="100" SelectedIndex="2" Margin="3">
+            <ComboBox Name="comboBox" Width="100" SelectedIndex="1" Margin="3">
                 <ComboBoxItem>Image</ComboBoxItem>
-                <ComboBoxItem>SoundIn</ComboBoxItem>
-                <ComboBoxItem>SoundOut</ComboBoxItem>
+                <ComboBoxItem>Sound</ComboBoxItem>
             </ComboBox>
             <Button Name="settingsButton" Margin="3" Content="Settings" Click="settingsButton_Click"/>
             <Button Name="startButton" Margin="3" Content="Start" Click="startButton_Click"/>
