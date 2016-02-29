@@ -24,6 +24,7 @@ namespace Main.Samples
         private List<double[]> buffer;
 
         public int Time { get; set; }
+        public double NoiseThreshold { get; set; }
 
 
         public SoundSample(bool input)
@@ -45,7 +46,9 @@ namespace Main.Samples
             Model = new ESOINN(100, age, age + age / 2 );
             ReduceNoise = true;
             Winners = new List<Vertex>();
+
             this.Time = 10;
+            this.NoiseThreshold = 0.01;
         }
 
         public override void Dispose()
@@ -101,16 +104,15 @@ namespace Main.Samples
                 else
                     data.Add(ConvertValue(format.BitsPerSample, e.Buffer, i * rate));
 
-                if (ReduceNoise && Math.Abs(data[data.Count - 1]) < 0.01)
+                if (ReduceNoise && Math.Abs(data[data.Count - 1]) < this.NoiseThreshold)
                 {
                     noiseCounter++;
                     if (noiseCounter >= format.SampleRate / (1000 / this.Time))
-                    {
                         data.Clear();
 
+                    if (noiseCounter >= (format.SampleRate / (1000 / this.Time)) * 2)
                         if (Winners.Count > 0 && Winners[Winners.Count - 1] != null && this.buffer.Count == 0)
                             Winners.Add(null);
-                    }
                 }
                 else
                     noiseCounter = 0;

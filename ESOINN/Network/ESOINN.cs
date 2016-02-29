@@ -133,41 +133,48 @@ namespace Main.Network
         public void Load(string filename)
         {
             this.Clear();
-            using (TextReader reader = File.OpenText(filename))
+            try
             {
-                this.dim = int.Parse(reader.ReadLine());
-                this.AgeMax = int.Parse(reader.ReadLine());
-                this.IterationCount = int.Parse(reader.ReadLine());
-                this.IterationThreshold = int.Parse(reader.ReadLine());
-                this.C1 = double.Parse(reader.ReadLine());
-                this.C2 = double.Parse(reader.ReadLine());
-
-                int count = int.Parse(reader.ReadLine());
-                for (int i = 0; i < count; i++)
+                using (TextReader reader = File.OpenText(filename))
                 {
-                    Vertex vertex = new Vertex();
-                    string[] temp = reader.ReadLine().Split(';');
-                    vertex.Weight = new double[temp.Length];
-                    for (int j = 0; j < temp.Length; j++)
-                        vertex.Weight[j] = double.Parse(temp[j]);
-                    vertex.ClassId = int.Parse(reader.ReadLine());
-                    vertex.Density = double.Parse(reader.ReadLine());
-                    vertex.NumberOfSignals = int.Parse(reader.ReadLine());
-                    vertex.S = double.Parse(reader.ReadLine());
-                    this.Graph.Vertices.Add(vertex);
-                }
+                    this.dim = int.Parse(reader.ReadLine());
+                    this.AgeMax = int.Parse(reader.ReadLine());
+                    this.IterationCount = int.Parse(reader.ReadLine());
+                    this.IterationThreshold = int.Parse(reader.ReadLine());
+                    this.C1 = double.Parse(reader.ReadLine());
+                    this.C2 = double.Parse(reader.ReadLine());
 
-                count = int.Parse(reader.ReadLine());
-                for (int i = 0; i < count; i++)
-                {
-                    var vert1 = this.Graph.Vertices[int.Parse(reader.ReadLine())];
-                    var vert2 = this.Graph.Vertices[int.Parse(reader.ReadLine())];
-                    Edge edge = new Edge(vert1, vert2);
-                    edge.Age = int.Parse(reader.ReadLine());
-                    vert1.Edges.Add(edge);
-                    vert2.Edges.Add(edge);
-                    this.Graph.Edges.Add(edge);
+                    int count = int.Parse(reader.ReadLine());
+                    for (int i = 0; i < count; i++)
+                    {
+                        Vertex vertex = new Vertex();
+                        string[] temp = reader.ReadLine().Split(';');
+                        vertex.Weight = new double[temp.Length];
+                        for (int j = 0; j < temp.Length; j++)
+                            vertex.Weight[j] = double.Parse(temp[j]);
+                        vertex.ClassId = int.Parse(reader.ReadLine());
+                        vertex.Density = double.Parse(reader.ReadLine());
+                        vertex.NumberOfSignals = int.Parse(reader.ReadLine());
+                        vertex.S = double.Parse(reader.ReadLine());
+                        this.Graph.Vertices.Add(vertex);
+                    }
+
+                    count = int.Parse(reader.ReadLine());
+                    for (int i = 0; i < count; i++)
+                    {
+                        var vert1 = this.Graph.Vertices[int.Parse(reader.ReadLine())];
+                        var vert2 = this.Graph.Vertices[int.Parse(reader.ReadLine())];
+                        Edge edge = new Edge(vert1, vert2);
+                        edge.Age = int.Parse(reader.ReadLine());
+                        vert1.Edges.Add(edge);
+                        vert2.Edges.Add(edge);
+                        this.Graph.Edges.Add(edge);
+                    }
                 }
+            }
+            catch (Exception e)
+            {
+                System.Windows.MessageBox.Show(e.Message);
             }
         }
 

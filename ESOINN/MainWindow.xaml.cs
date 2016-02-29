@@ -268,15 +268,25 @@ namespace Main
             }
 
             log.Items.Clear();
-            for (int i = 0; i < 100; i++)
+            int idx = Sample.Winners.Count - 1;
+            while (log.Items.Count < 100)
             {
-                int idx = Sample.Winners.Count - 1 - i;
-                if (idx < 0)
+                StringBuilder sbr = new StringBuilder("");
+                while (idx >= 0 && Sample.Winners[idx] != null)
+                {
+                    double len = 0.0;
+                    for (int i = 0; i < Sample.Winners[idx].Weight.Length; i++)
+                        len += Sample.Winners[idx].Weight[i] * Sample.Winners[idx].Weight[i];
+                    len = Math.Sqrt(len);
+
+                    sbr.Insert(0, string.Format("{0,4:000}({1:00.000}) ", Sample.Model.Graph.Vertices.IndexOf(Sample.Winners[idx]), len));
+                    idx--;
+                }
+                if (sbr.Length > 0)
+                    log.Items.Add(sbr.ToString());
+                if (idx == -1)
                     break;
-                if (Sample.Winners[idx] == null)
-                    log.Items.Add("");
-                else
-                    log.Items.Add(Sample.Model.Graph.Vertices.IndexOf(Sample.Winners[idx]));
+                idx--;
             }
 
             // Graph
