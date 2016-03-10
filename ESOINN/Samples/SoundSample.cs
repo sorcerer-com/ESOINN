@@ -26,6 +26,8 @@ namespace Main.Samples
 
         public int Time { get; set; }
         public double NoiseThreshold { get; set; }
+        public bool Fourier { get; set; }
+        public bool Scale { get; set; }
 
         private bool muteInput;
         public bool MuteInput
@@ -65,8 +67,10 @@ namespace Main.Samples
             Winners = new List<Vertex>();
 
             this.Time = 10;
-            this.NoiseThreshold = 0.1;
+            this.NoiseThreshold = 0.05;
             this.MuteInput = true;
+            this.Fourier = true;
+            this.Scale = true;
         }
 
         public override void Dispose()
@@ -148,17 +152,31 @@ namespace Main.Samples
                         double[] realIn = new double[DSP.FourierTransform.NextPowerOfTwo((uint)data.Count)];
                         data.CopyTo(realIn);
                         double[] realOut = new double[realIn.Length];
-                        if (true) // Fourier or not?
+                        if (this.Fourier) // Fourier or not?
                             DSP.FourierTransform.Compute((uint)realIn.Length, ref realIn, new double[realIn.Length], realOut, new double[realIn.Length], false);
                         else
                             realOut = data.ToArray();
 
+                        double max = double.MinValue;
+                        if (this.Scale) // TODO: may be remove after test
+                        {
+                            foreach (var value in realOut)
+                                max = Math.Max(max, value);
+                        }
+                        else
+                            max = 1.0;
+
+                        int[] buffCount = new int[Model.Dim];
                         double[] buff = new double[Model.Dim];
                         for (int j = 0; j < realOut.Length; j++)
                         {
                             int idx = (int)(j / ((double)realOut.Length / Model.Dim));
-                            buff[idx] += realOut[j];
+                            buff[idx] += realOut[j] / max;
+                            buffCount[idx]++;
                         }
+                        for (int j = 0; j < Model.Dim; j++)
+                            buff[j] /= buffCount[j];
+
                         this.buffer.Add(buff);
                         samplesCount++;
                         data.Clear();

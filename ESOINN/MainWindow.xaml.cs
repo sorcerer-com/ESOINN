@@ -39,7 +39,8 @@ namespace Main
         {
             this.runing = false;
             Thread.Sleep(500);
-            this.Sample.Dispose();
+            if (this.Sample != null)
+                this.Sample.Dispose();
 
             base.OnClosing(e);
         }

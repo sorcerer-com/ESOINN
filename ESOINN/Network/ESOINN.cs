@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -107,17 +108,17 @@ namespace Main.Network
                 writer.WriteLine(this.AgeMax);
                 writer.WriteLine(this.IterationCount);
                 writer.WriteLine(this.IterationThreshold);
-                writer.WriteLine(this.C1);
-                writer.WriteLine(this.C2);
+                writer.WriteLine(this.C1.ToString(CultureInfo.InvariantCulture));
+                writer.WriteLine(this.C2.ToString(CultureInfo.InvariantCulture));
 
                 writer.WriteLine(this.Graph.Vertices.Count);
                 foreach(var vertex in this.Graph.Vertices)
                 {
-                    writer.WriteLine(string.Join(";", vertex.Weight));
+                    writer.WriteLine(string.Join(";", vertex.Weight.Select(d => d.ToString(CultureInfo.InvariantCulture))));
                     writer.WriteLine(vertex.ClassId);
-                    writer.WriteLine(vertex.Density);
+                    writer.WriteLine(vertex.Density.ToString(CultureInfo.InvariantCulture));
                     writer.WriteLine(vertex.NumberOfSignals);
-                    writer.WriteLine(vertex.S);
+                    writer.WriteLine(vertex.S.ToString(CultureInfo.InvariantCulture));
                 }
 
                 writer.WriteLine(this.Graph.Edges.Count);
@@ -141,8 +142,8 @@ namespace Main.Network
                     this.AgeMax = int.Parse(reader.ReadLine());
                     this.IterationCount = int.Parse(reader.ReadLine());
                     this.IterationThreshold = int.Parse(reader.ReadLine());
-                    this.C1 = double.Parse(reader.ReadLine());
-                    this.C2 = double.Parse(reader.ReadLine());
+                    this.C1 = double.Parse(reader.ReadLine(), CultureInfo.InvariantCulture);
+                    this.C2 = double.Parse(reader.ReadLine(), CultureInfo.InvariantCulture);
 
                     int count = int.Parse(reader.ReadLine());
                     for (int i = 0; i < count; i++)
@@ -151,11 +152,11 @@ namespace Main.Network
                         string[] temp = reader.ReadLine().Split(';');
                         vertex.Weight = new double[temp.Length];
                         for (int j = 0; j < temp.Length; j++)
-                            vertex.Weight[j] = double.Parse(temp[j]);
+                            vertex.Weight[j] = double.Parse(temp[j], CultureInfo.InvariantCulture);
                         vertex.ClassId = int.Parse(reader.ReadLine());
-                        vertex.Density = double.Parse(reader.ReadLine());
+                        vertex.Density = double.Parse(reader.ReadLine(), CultureInfo.InvariantCulture);
                         vertex.NumberOfSignals = int.Parse(reader.ReadLine());
-                        vertex.S = double.Parse(reader.ReadLine());
+                        vertex.S = double.Parse(reader.ReadLine(), CultureInfo.InvariantCulture);
                         this.Graph.Vertices.Add(vertex);
                     }
 
